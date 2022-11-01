@@ -33,6 +33,7 @@ namespace SchnabelSoftware.Ludo
 		private int currentWaypointSteps = 0;
 		private bool isHome = true;
 		private bool isFinish = false;
+		private bool isAtStartingPoint = false;
 
 		private int startIndex = 0;
 		private int stepsToMove = 0;
@@ -48,6 +49,13 @@ namespace SchnabelSoftware.Ludo
 
         public bool IsHome => isHome;
 		public bool IsFinish => isFinish;
+		public bool IsAtStartingPoint => isAtStartingPoint;
+		public Color TeamColor { get; private set; }
+
+		private void Awake()
+		{
+			TeamColor = transform.Find("Model/Doll").GetComponent<MeshRenderer>().material.color;
+		}
 
 		public void GoToStart()
 		{
@@ -59,6 +67,16 @@ namespace SchnabelSoftware.Ludo
 			isFinish = false;
 			isEndGame = false;
             checkIsFinish = false;
+			isAtStartingPoint = true;
+
+            if (GameManager.Current.TryGetGameDollFromWaypointAt(currentWaypointIndex, out DollController otherDoll))
+            {
+                if (otherDoll.player != player)
+                {
+                    // The opposing player's doll is sent home.
+                    otherDoll.GoToHome();
+                }
+            }
         }
 
 		public void GoToHome()
@@ -80,8 +98,9 @@ namespace SchnabelSoftware.Ludo
             isHome = true;
             isFinish = false;
             isEndGame = false;
+            isAtStartingPoint = false;
 
-			player.SetHomePositionWhere(this);
+            player.SetHomePositionWhere(this);
         }
 
 		public void MoveTo(int steps)
@@ -102,8 +121,11 @@ namespace SchnabelSoftware.Ludo
 
 							currentWaypointSteps = tempSteps;
 							running = true;
-						}
-					}
+
+							// The opposing player's doll is sent home.
+							otherDoll.GoToHome();
+                        }
+                    }
 					else
 					{
                         startIndex = currentWaypointIndex;
@@ -112,7 +134,10 @@ namespace SchnabelSoftware.Ludo
                         currentWaypointSteps = tempSteps;
                         running = true;
                     }
-					
+
+					if (isAtStartingPoint)
+						isAtStartingPoint = false;
+
 					Debug.Log($"Current Index {currentWaypointIndex} Goal Index {goalIndex} other {otherDoll}");
 				}
 

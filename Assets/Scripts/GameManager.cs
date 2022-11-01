@@ -10,7 +10,9 @@
  *
  * © Copyright by Katersoft 2009-2022
  */
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SchnabelSoftware.Ludo
 {
@@ -32,6 +34,13 @@ namespace SchnabelSoftware.Ludo
 		[Header("Path Systems")]
 		[SerializeField] private PathSystem pathSystem = null;
 
+		[Header("UI Properties")]
+		[SerializeField] private Image currentPlayerColorUI = null;
+        [SerializeField] private TMP_Text currentDiceNumberUI = null;
+
+        private int currentPlayerIndex = 0;
+		private Player currentPlayer = null;
+
 		public int PathLength => pathSystem != null ? pathSystem.Length : 0;
 
         private void Awake()
@@ -41,7 +50,8 @@ namespace SchnabelSoftware.Ludo
 
 		private void Start()
 		{
-
+			currentPlayer = players[0];
+			currentPlayerColorUI.color = currentPlayer.TeamColor;
 		}
 
 		private DollController currentDoll = null;
@@ -49,6 +59,7 @@ namespace SchnabelSoftware.Ludo
 
 		private void Update()
 		{
+			/*
 			if (Input.GetKeyDown(KeyCode.Alpha6) && !currentDoll)
 			{
 				nextSteps = 6;
@@ -105,6 +116,9 @@ namespace SchnabelSoftware.Ludo
 				currentDoll = null;
 				nextSteps = 0;
             }
+			*/
+
+			currentPlayer.MakeNextMove();
 		}
 
 		private bool CheckForDoll(Vector3 worldPosition)
@@ -175,5 +189,31 @@ namespace SchnabelSoftware.Ludo
 				player.ResetGameDolls();
 			}
 		}
+
+		public int GetNextDiceNumber()
+		{
+			int num = Random.Range(1, 7);
+			if (!currentDiceNumberUI.gameObject.activeInHierarchy)
+				currentDiceNumberUI.gameObject.SetActive(true);
+
+            currentDiceNumberUI.text = $"Dice Number: {num}";
+
+            return num;
+        }
+
+		public void GoToNextPlayer()
+		{
+			currentPlayerIndex++;
+			if (currentPlayerIndex >= players.Length)
+				currentPlayerIndex = 0;
+
+			currentPlayer = players[currentPlayerIndex];
+
+			if (currentPlayer.IsFinish())
+				GoToNextPlayer();
+
+            currentDiceNumberUI.gameObject.SetActive(false);
+            currentPlayerColorUI.color = currentPlayer.TeamColor;
+        }
     }
 }
